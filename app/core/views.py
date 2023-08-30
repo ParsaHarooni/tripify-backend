@@ -50,7 +50,7 @@ class TripView(APIView):
         
     def delete(self, request):
         data = request.data
-        trip_id = request.data.get("trip_id") or None
+        trip_id = data.get("trip_id") or None
         if trip_id is not None:
             try:
                 trip = Trip.objects.get(pk=trip_id, owner=request.user)
