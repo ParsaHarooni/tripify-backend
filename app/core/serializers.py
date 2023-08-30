@@ -13,3 +13,6 @@ class ExpenseSerializer(serializers.Serializer):
     class Meta:
         model = Expense
         fields = '__all__'
+        
+    def validate_empty_values(self, data):
+        return super().validate_empty_values(data)

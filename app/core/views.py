@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from core.models import Trip
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
+from django.forms.models import model_to_dict
+
+from core.models import Trip
 
 
 
@@ -24,13 +26,46 @@ class TripView(APIView):
             trips = Trip.objects.get(owner=user)
         except ObjectDoesNotExist:
             trips = []
-        res = {
-                "trips": trips
-            }
+        res = dict(
+            trips=trips
+        )
         return Response(res, status=status.HTTP_200_OK)
     
     def post(self, request):
-        pass
-    
+        data = request.data
+        city = data.get("city") or None
+        country = data.get("country") or None
+        user = request.user
+        if city is not None and country is not None:
+            trip = Trip.objects.create(country=country, city=city, owner=user)
+            res = dict(
+                trip=model_to_dict(trip)
+            )
+            return Response(res, status=status.HTTP_200_OK)
+        else:
+            res = dict(
+                message = "Please fill the form correctly"
+            )
+            return Response(res, status=status.HTTP_400_BAD_REQUEST)
+        
     def delete(self, request):
-        pass
+        data = request.data
+        trip_id = request.data.get("trip_id") or None
+        if trip_id is not None:
+            try:
+                trip = Trip.objects.get(pk=trip_id, owner=request.user)
+                trip.delete()
+                res = dict(
+                    message = f"Trip with ID [{trip_id}] deleted"
+                )
+                return Response(res, status=status.HTTP_200_OK)
+            except:
+                res = dict(
+                    message = "Trip not found"
+                )
+                return Response(res, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            res = dict(
+                    message = "trip_id not provided"
+                )
+            return Response(res, status=status.HTTP_400_BAD_REQUEST)
