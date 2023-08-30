@@ -1,11 +1,13 @@
+import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from django.forms.models import model_to_dict
+from django.core import serializers
 
-from core.models import Trip
+from core.models import Trip, Expense
 
 
 
@@ -61,11 +63,61 @@ class TripView(APIView):
                 return Response(res, status=status.HTTP_200_OK)
             except:
                 res = dict(
-                    message = "Trip not found"
+                    message = "Trip not found",
                 )
                 return Response(res, status=status.HTTP_400_BAD_REQUEST)
         else:
             res = dict(
                     message = "trip_id not provided"
                 )
+            return Response(res, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+class ExpenseView(APIView):
+    permission_classes = (IsAuthenticated,)
+    
+    def get(self, request):
+        trip_id = request.data.get("trip_id") or None
+        if trip_id is not None:
+            try:
+                expenses = Expense.objects.filter(trip__pk=trip_id)
+                res = dict(
+                    expenses = json.loads(serializers.serialize('json', expenses))
+                )
+                return Response(res, status=status.HTTP_200_OK)
+            except Exception as e:
+                res = dict(
+                    message = "Trip not found",
+                    e=str(e)
+                )
+                return Response(res, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            res = dict(
+                    message = "trip_id not provided"
+                )
+            return Response(res, status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self, request):
+        trip_id = request.data.get("trip_id") or None
+        reason = request.data.get("reason") or None
+        price = request.data.get("price") or None
+        category = request.data.get("category") or None
+        if None not in [trip_id, reason, price, category]:
+            try:
+                trip = Trip.objects.get(pk=trip_id, owner=request.user)
+                expense = Expense.objects.create(trip=trip, reason=reason, price=price, category=category)
+                res = dict(
+                        expenses = model_to_dict(expense)
+                    )
+                return Response(res, status=status.HTTP_200_OK)
+            except:
+                res = dict(
+                        message = "Trip was not found"
+                    )
+                return Response(res, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            res = dict(
+                message = "Please provide trip_id, reason, price, category"
+            )
             return Response(res, status=status.HTTP_400_BAD_REQUEST)
