@@ -1,4 +1,5 @@
 import json
+import random
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -6,7 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from django.forms.models import model_to_dict
 from django.core import serializers
-from django.db.models import Sum, Avg
+from django.db.models import Sum
 from core.models import Trip, Expense
 
 
@@ -140,5 +141,20 @@ class PredictPrice(APIView):
     permission_classes = (IsAuthenticated,)
     
     def post(self, request):
-        city = request.data.get('city') or None
-        
+        city = request.data.get('city')
+        trips = Trip.objects.filter(city=city)
+        prediction = 0
+        if len(trips) == 0:
+            predictions = [3000000, 4000000, 5000000, 4800000]
+            prediction = random.choice(predictions)
+        else:
+            prediction = 0
+            while prediction == 0:
+                max_id = trips.order_by('-id')[0].id
+                random_id = random.randint(1, max_id + 1)
+                random_trip = trips.filter(id__gte=random_id)[0]
+                prediction = Expense.objects.get(trip__pk=random_trip.pk).aggregate(Sum('price'))['price__sum']
+        res = dict(
+            prediction=prediction
+        )
+        return Response(res, status=status.HTTP_200_OK)
