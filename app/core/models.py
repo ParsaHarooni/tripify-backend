@@ -15,6 +15,7 @@ class Trip(models.Model):
     city = models.CharField(verbose_name='city', max_length=128)
     country = models.CharField(verbose_name='country', max_length=128)
     owner = models.ForeignKey(verbose_name='owner', to=User, on_delete=models.CASCADE)
+    people = models.IntegerField(verbose_name='people')
     
 class Expense(models.Model):
     reason = models.CharField(verbose_name='reason', max_length=128)

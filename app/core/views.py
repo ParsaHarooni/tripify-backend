@@ -36,9 +36,10 @@ class TripView(APIView):
         data = request.data
         city = data.get("city") or None
         country = data.get("country") or None
+        people = data.get("people") or None
         user = request.user
         if city is not None and country is not None:
-            trip = Trip.objects.create(country=country, city=city, owner=user)
+            trip = Trip.objects.create(country=country, city=city, owner=user, people=people)
             res = dict(
                 trip=model_to_dict(trip)
             )
