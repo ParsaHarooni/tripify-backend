@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from django.forms.models import model_to_dict
 from django.core import serializers
-
+from django.db.models import Sum
 from core.models import Trip, Expense
 
 
@@ -81,9 +81,13 @@ class ExpenseView(APIView):
         trip_id = request.data.get("trip_id") or None
         if trip_id is not None:
             try:
+                trip = Trip.objects.filter(pk=trip_id)
                 expenses = Expense.objects.filter(trip__pk=trip_id)
+                costs = expenses.aggregate(Sum('price'))
+                average_costs = costs.get("price__sum") / trip.people
                 res = dict(
-                    expenses = json.loads(serializers.serialize('json', expenses))
+                    expenses = json.loads(serializers.serialize('json', expenses)),
+                    average_costs = average_costs
                 )
                 return Response(res, status=status.HTTP_200_OK)
             except Exception as e:
