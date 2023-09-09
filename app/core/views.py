@@ -18,14 +18,13 @@ class PingView(APIView):
         content = {'message': 'Pong'}
         return Response(content, status=status.HTTP_200_OK)
     
-    
 class TripView(APIView):
     permission_classes = (IsAuthenticated,)
     
     def get(self, request):
         user = request.user
         try:
-            trips = Trip.objects.get(owner=user)
+            trips = Trip.objects.filter(owner=user)
         except ObjectDoesNotExist:
             trips = []
         res = dict(
