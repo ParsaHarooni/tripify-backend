@@ -40,7 +40,7 @@ class TripView(APIView):
         people = data.get("people") or None
         user = request.user
         if None not in [city, country, people]:
-            predicted_price = Expense.objects.filter(trip__city=city).aaggregate(Avg(Sum('price')))
+            predicted_price = Expense.objects.filter(trip__city=city).aggregate(Avg(Sum('price')))
             trip = Trip.objects.create(country=country, city=city, owner=user, people=people)
             res = dict(
                 trip=model_to_dict(trip),
