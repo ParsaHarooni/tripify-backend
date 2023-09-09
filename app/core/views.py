@@ -80,7 +80,7 @@ class ExpenseView(APIView):
     permission_classes = (IsAuthenticated,)
     
     def get(self, request):
-        trip_id = request.data.get("trip_id") or None
+        trip_id = request.GET.get("trip_id") or None
         if trip_id is not None:
             try:
                 trip = Trip.objects.get(pk=trip_id)
