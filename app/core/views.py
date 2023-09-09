@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from django.forms.models import model_to_dict
 from django.core import serializers
-from django.db.models import Sum
+from django.db.models import Sum, Avg
 from core.models import Trip, Expense
 
 
@@ -19,6 +19,7 @@ class PingView(APIView):
         return Response(content, status=status.HTTP_200_OK)
     
 class TripView(APIView):
+    
     permission_classes = (IsAuthenticated,)
     
     def get(self, request):
@@ -38,10 +39,12 @@ class TripView(APIView):
         country = data.get("country") or None
         people = data.get("people") or None
         user = request.user
-        if city is not None and country is not None:
+        if None not in [city, country, people]:
+            predicted_price = Expense.objects.filter(trip__city=city).aaggregate(Avg(Sum('price')))
             trip = Trip.objects.create(country=country, city=city, owner=user, people=people)
             res = dict(
-                trip=model_to_dict(trip)
+                trip=model_to_dict(trip),
+                predicted_price = predicted_price
             )
             return Response(res, status=status.HTTP_200_OK)
         else:
@@ -82,14 +85,21 @@ class ExpenseView(APIView):
         if trip_id is not None:
             try:
                 trip = Trip.objects.get(pk=trip_id)
-                expenses = Expense.objects.filter(trip__pk=trip_id)
-                costs = expenses.aggregate(Sum('price'))
-                average_costs = costs.get("price__sum") / trip.people
-                res = dict(
-                    expenses = json.loads(serializers.serialize('json', expenses)),
-                    average_costs = average_costs
-                )
-                return Response(res, status=status.HTTP_200_OK)
+                expenses = Expense.objects.filter(trip__pk=trip_id) or None
+                if expenses != None:
+                    costs = expenses.aggregate(Sum('price'))
+                    average_costs = costs.get("price__sum") / trip.people
+                    res = dict(
+                        expenses = json.loads(serializers.serialize('json', expenses)),
+                        average_costs = average_costs
+                    )
+                    return Response(res, status=status.HTTP_200_OK)
+                else:
+                    res = dict(
+                        expenses = [],
+                        average_costs = 0
+                    )
+                    return Response(res, status=status.HTTP_200_OK)
             except Exception as e:
                 res = dict(
                     message = "Trip not found",
