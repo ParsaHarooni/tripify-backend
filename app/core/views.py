@@ -81,7 +81,7 @@ class ExpenseView(APIView):
         trip_id = request.data.get("trip_id") or None
         if trip_id is not None:
             try:
-                trip = Trip.objects.filter(pk=trip_id)
+                trip = Trip.objects.get(pk=trip_id)
                 expenses = Expense.objects.filter(trip__pk=trip_id)
                 costs = expenses.aggregate(Sum('price'))
                 average_costs = costs.get("price__sum") / trip.people
