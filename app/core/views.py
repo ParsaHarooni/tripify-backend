@@ -28,7 +28,7 @@ class TripView(APIView):
         except ObjectDoesNotExist:
             trips = []
         res = dict(
-            trips=trips
+            trips=json.loads(serializers.serialize('json', trips))
         )
         return Response(res, status=status.HTTP_200_OK)
     
