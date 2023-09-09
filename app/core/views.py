@@ -149,9 +149,12 @@ class PredictPrice(APIView):
             prediction = 0
             max_id = trips.order_by('-id')[0].id
             if max_id != 0:
-                random_id = random.randint(1, max_id + 1)
-                random_trip = trips.filter(id__gte=random_id)[0]
-                prediction = Expense.objects.get(trip__pk=random_trip.pk).aggregate(Sum('price'))['price__sum']
+                try:
+                    random_id = random.randint(1, max_id + 1)
+                    random_trip = trips.filter(id__gte=random_id)[0]
+                    prediction = Expense.objects.get(trip__pk=random_trip.pk).aggregate(Sum('price'))['price__sum']
+                except:
+                    pass
         res = dict(
             prediction=prediction
         )
