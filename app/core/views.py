@@ -143,14 +143,12 @@ class PredictPrice(APIView):
     def post(self, request):
         city = request.data.get('city')
         trips = Trip.objects.filter(city=city)
-        prediction = 0
-        if len(trips) == 0:
-            predictions = [3000000, 4000000, 5000000, 4800000]
-            prediction = random.choice(predictions)
-        else:
+        predictions = [3000000, 4000000, 5000000, 4800000]
+        prediction = random.choice(predictions)
+        if len(trips) != 0: 
             prediction = 0
-            while prediction == 0:
-                max_id = trips.order_by('-id')[0].id
+            max_id = trips.order_by('-id')[0].id
+            if max_id != 0:
                 random_id = random.randint(1, max_id + 1)
                 random_trip = trips.filter(id__gte=random_id)[0]
                 prediction = Expense.objects.get(trip__pk=random_trip.pk).aggregate(Sum('price'))['price__sum']
